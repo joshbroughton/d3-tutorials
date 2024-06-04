@@ -8,17 +8,17 @@
 </head>
 <body>
 
-  <svg id="svg" width="800" height="500"></svg>
+  <svg id="svg" width="1600" height="800"></svg>
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <script>
-    d3.csv('/data/cities.csv')
+    d3.csv('/data/worldcities.csv')
       .then(data => {
-        const minX = d3.min(data, d => parseFloat(d.x))
-        const maxX = d3.max(data, d => parseFloat(d.x))
+        const minX = d3.min(data, d => parseFloat(d.lng))
+        const maxX = d3.max(data, d => parseFloat(d.lng))
 
-        const minY = d3.min(data, d => parseFloat(d.y))
-        const maxY = d3.max(data, d => parseFloat(d.y))
+        const minY = d3.min(data, d => parseFloat(d.lat))
+        const maxY = d3.max(data, d => parseFloat(d.lat))
 
         const minPop = d3.min(data, d => parseFloat(d.population))
         const maxPop = d3.max(data, d => parseFloat(d.population))
@@ -27,19 +27,26 @@
 
         const xScale = d3.scaleLinear()
           .domain([minX - 50, maxX + 50])
-          .range([0, 800])
+          .range([0, 1600])
 
         const yScale = d3.scaleLinear()
-          .domain([minY - 50, maxY + 50])
-          .range([0, 500])
+          .domain([maxY + 20, minY - 20])
+          .range([0, 800])
 
         const popScale = d3.scaleSqrt()
           .domain([minPop, maxPop])
-          .range([5, 100])
+          .range([2, 100])
+
+        const colors = [];
+
+        for (let i = 0; i < countries.length; i++) {
+          const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+          colors.push(randomColor);
+        }
 
         const countryScale = d3.scaleOrdinal()
           .domain(countries)
-          .range(['cornflowerblue', 'gold', 'gold', 'tomato', 'darkred'])
+          .range(colors)
 
         d3.select('#svg')
         .style('border', '1px solid')
@@ -48,8 +55,8 @@
         .data(data)
         .enter()
         .append('circle')
-        .attr('cx', d => xScale(d.x))
-        .attr('cy', d => yScale(d.y))
+        .attr('cx', d => xScale(d.lng))
+        .attr('cy', d => yScale(d.lat))
         .attr('r', d => popScale(d.population))
         .attr('fill', d => countryScale(d.country))
         .attr('opacity', 0.25)
