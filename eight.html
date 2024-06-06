@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Using Paths</title>
+  <style>
+    /* Put the box in the center of the page */
+    body, html {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #svg {
+      border: 1px solid;
+    }
+  </style>
+  </head>
+  <body>
+
+  <svg id="svg" width="1600" height="400"></svg>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    function getDataForState(data, state) {
+      const arr = data
+        .filter(d => d.state === state)
+        .filter(d => !isNaN(d.precipitation))
+        .map(d => {
+          d.precipitation = parseFloat(d.precipitation)
+          return d
+        })
+      return arr
+    }
+    function handleData(data) {
+      const width = 1600;
+      const height = 400;
+      const margin = 30;
+      const parseTime = d3.timeParse('%d/%m/%Y')
+      const baData = getDataForState(data, 'BA')
+      const RrData = getDataForState(data, 'RR')
+      baData.forEach(d => d.date = parseTime(d.date))
+      const dateExtent = d3.extent(baData, d => d.date)
+
+      const xScale = d3.scaleTime()
+        .domain(dateExtent)
+        .range([margin, width - margin])
+        .nice()
+
+      const percipitationExtents = d3.extent(baData, d => d.precipitation)
+      const yScale = d3.scaleLinear()
+        .domain(percipitationExtents)
+        .range([height - margin, margin])
+
+      const linegen = d3.line() // create a line generator
+        .x((d, i) => xScale(d.date)) // map the x to the index
+        .y(d => yScale(d.precipitation)) // map y to percipitation
+        .curve(d3.curveLinear) // apply a curve type
+
+      const svg = d3
+        .select('#svg')
+
+      const graph = svg
+        .append('g')
+
+      graph
+        .append('path') // append a path
+        .attr('d', linegen(baData)) // generate a line
+        .attr('stroke-width', 2)
+        .attr('stroke', 'cornflowerblue')
+        .attr('fill', 'none')
+
+      const bottomAxis = d3.axisBottom(xScale).ticks(d3.timeMonth.every(6))
+      const leftAxis = d3.axisLeft(yScale)
+
+      svg
+        .append('g')
+        .attr('transform', `translate(0, ${height - margin})`)
+        .call(bottomAxis)
+
+      svg
+        .append('g')
+        .attr('transform', `translate(${margin}, 0)`)
+        .call(leftAxis)
+    }
+
+    d3.csv('/data/precipitation.csv')
+        .then(handleData)
+  </script>
+  </body>
+</html>
