@@ -35,7 +35,7 @@
         .range([margin.left, width + margin.left])
         .padding(0.1) // space between bars
 
-      const popExtent = d3.extent(data, d => d.population)
+      const popExtent = d3.extent(data, (d) => parseInt(d.population))
       console.log(popExtent)
       const yscale = d3.scaleLinear()
         .domain(['16000000', '0'])
