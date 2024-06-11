@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <svg id="svg" width="600" height="300"></svg>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    async function handleData() {
+      const data = await d3.csv('data/cities.csv')
+
+      const margin = { top: 0, right: 10, bottom: 20, left: 70 }
+      const width = 600 - (margin.left + margin.right)
+      const height = 300 - (margin.top + margin.bottom)
+      const cities = Array.from(new Set(data.map(d => d.label)))
+
+      colors = [];
+
+      for (let i = 0; i < cities.length; i++) {
+          const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+          colors.push(randomColor);
+        }
+
+      const cityScale = d3.scaleOrdinal()
+        .domain(cities)
+        .range(colors)
+
+
+      const xscale = d3.scaleBand()
+        .domain(data.map(d => d.label))
+        .range([margin.left, width + margin.left])
+        .padding(0.1) // space between bars
+
+      const popExtent = d3.extent(data, d => d.population)
+      console.log(popExtent)
+      const yscale = d3.scaleLinear()
+        .domain(['16000000', '0'])
+        .range([0, height - margin.top])
+
+      const svg = d3.select('#svg')
+      const barGroup = svg.append('g')
+      // Make the bars
+      barGroup
+        .selectAll('rect')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', (d, i) => xscale(d.label))
+        .attr('y', d => yscale(d.population))
+        .attr('width', xscale.bandwidth())
+        .attr('height', d => height - yscale(d.population))
+        .attr('fill', d => cityScale(d.label))
+
+      // bottom axis
+      const bottomAxis = d3.axisBottom(xscale);
+
+      svg
+        .append('g')
+        .attr('transform', `translate(${0}, ${height})`)
+        .call(bottomAxis)
+
+      // left axis
+      const leftAxis = d3.axisLeft(yscale)
+        .tickFormat(d3.format('.2s'))
+        .ticks(12)
+        .tickSize(-width)
+        // Set the values displayed
+        .tickValues([1000000, 5000000, 10000000, 15000000])
+
+      svg
+        .append('g')
+        .attr('transform', `translate(${margin.left}, 0)`)
+        .call(leftAxis)
+    }
+
+    handleData()
+  </script>
+</body>
+</html>
