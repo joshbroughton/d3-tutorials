@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Using Paths</title>
+  <style>
+    /* Put the box in the center of the page */
+    body, html {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    }
+
+    #svg {
+    border: 1px solid;
+    }
+
+    select {
+    font-size: 1rem;
+    margin: 1rem 0;
+    align-self: flex-end;
+    }
+  </style>
+  </head>
+  <body>
+
+  <svg id="svg" width="600" height="300"></svg>
+
+  <select id="select"></select>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    function convertToArray(obj) {
+      months = Object.keys(obj).filter(key => key !== "" && key !== "YEAR")
+      result = months.map((month) => {
+        return({month: month, temp: obj[month]})
+      })
+      return result;
+    }
+
+    async function handleData() {
+      const data = await d3.csv('data/Weather Data in India from 1901 to 2017.csv')
+      const year_1901 = data[0]
+      const months_1901 = convertToArray(year_1901)
+
+      const width = 600
+      const height = 300
+      const margin = 40
+
+      const xscale = d3.scaleLinear()
+        .domain([0, months_1901.length - 1])
+        .range([margin, width - margin])
+
+      const everyRainfallValue = []
+
+      data.forEach((d) => {
+        let keys = Object.keys(d);
+        keys = keys.filter((key) => key === "YEAR" || key === "" ? false : true)
+        keys.forEach(key => everyRainfallValue.push(parseFloat(d[`${key}`])))
+      })
+      everyRainfallValue.sort((a, b) => a - b)
+
+      const yscale = d3.scaleLinear()
+        .domain([everyRainfallValue[0], everyRainfallValue.pop()])
+        .range([height - margin, margin])
+
+      // Select the SVG
+      const svg = d3
+        .select('#svg')
+
+      const selectElement = d3
+        .select('#select')
+
+      for (let i = 0; i <= 116; i++) {
+        selectElement
+          .append('option')
+          .attr('value', i)
+          .text(data[i]['YEAR'])
+      }
+      // Make a group for the graph
+      const graph = svg
+        .append('g')
+
+      // line generator
+      const linegen = d3.area()
+        .x((d, i) => xscale(i))
+        .y0(d => yscale(d.temp)) // change y to y0
+        .y1(height - margin) // add this line
+        .curve(d3.curveBasis)
+
+
+      const path = graph
+        .append('path')
+        .attr('d', linegen(months_1901))
+        .attr('fill', "#" + Math.floor(Math.random() * 16777215).toString(16))
+        .attr('opacity', 0.4)
+
+
+      const monthsScale = d3.scaleTime()
+        .domain([new Date('1901-01-01'), new Date('1901-12-01')])
+        .range([margin, width - margin])
+        .nice()
+
+      // Define the axis generators
+      const bottomAxis = d3.axisBottom(monthsScale)
+        .tickFormat(d3.timeFormat("%b"));
+      const leftAxis = d3.axisLeft(yscale)
+      // Create the bottom axis
+      svg
+        .append('g')
+        .attr('transform', `translate(0, ${height - margin})`)
+        .call(bottomAxis)
+      // Create the left axis
+      svg
+        .append('g')
+        .attr('transform', `translate(${margin}, 0)`)
+        .call(leftAxis)
+
+      const selectElementDom = document.getElementById('select')
+      selectElementDom.addEventListener('change', (e) => {
+        const index = parseInt(e.target.value);
+        path
+          .transition()
+          .duration(900)
+          .ease(d3.easeBackOut)
+          .attr('d', linegen(convertToArray(data[index])))
+          .attr('fill', "#" + Math.floor(Math.random() * 16777215).toString(16))
+      })
+    }
+
+    handleData()
+  </script>
+  </body>
+</html>
