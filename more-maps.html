@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    /* Put the box in the center of the page */
+    body, html {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    svg {
+      border: 1px solid;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <script>
+    const width = 950
+    const height = 500
+
+    // Create an SVG element
+    const svg = d3.select('body')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+
+    // Make a group to hold the map
+    const g = svg.append('g')
+
+    // Define a projection
+    const projection = d3.geoMercator()
+      // .center([0, 5])
+      .scale(150)
+      .rotate([0, 0])
+
+    // Create a path
+    const path = d3.geoPath()
+      .projection(projection)
+
+    // Color scale
+    const colorScale = d3.scaleSequential()
+      .interpolator(d3.interpolateRainbow)
+      .domain([0, 176])
+
+    async function loadMap() {
+      const earthquakeData = await d3.csv('data/earthquake.csv')
+      // Filter for earthquakes greater than 7 magnitude
+      const data = earthquakeData.filter(d => d.Magnitude > 7)
+
+      const topology = await d3.json('data/world-110m2.json')
+      g.selectAll('path')
+        .data(topojson.feature(topology, topology.objects.countries).features)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('fill', (d, i) => colorScale(i))
+        .attr('stroke', 'white')
+        .attr('stroke-width', 0.25)
+
+      // add a circle for each earthquak in data
+      d3.select('svg')
+        .selectAll('circle')
+        .data(data)
+        .enter()
+        .append('circle')
+        .attr('class', 'circle')
+        .attr('pointer-events', 'fill')
+        // Position the circles using geo coords and porjection
+        .attr('cx', d => projection([d.Longitude, d.Latitude])[0])
+        .attr('cy', d => projection([d.Longitude, d.Latitude])[1])
+        // Style the circles
+        .attr('r', d => d.Magnitude)
+        .attr('fill', 'rgba(255, 0, 0, 0.15)')
+        .attr('stroke', 'white')
+        .attr('stroke-width', 0.25)
+        .on('mouseover', function (e, d) {
+          d3.select(this)
+            .attr('stroke', '#f00')
+          d3.select('.info-box')
+            .attr('display', 'yes')
+            .attr('transform', `translate(${d3.select(this).attr('cx')}, ${d3.select(this).attr('cy')})`)
+          d3.select('.info-box text')
+            .text(d.Magnitude)
+        })
+        .on('mouseout', function (e, d) {
+          d3.select(this)
+            .attr('stroke', 'none')
+          d3.select('.info-box')
+            .attr('display', 'none')
+        })
+
+      const infoBox = d3.select('svg')
+        .append('g')
+        .attr('class', 'info-box')
+        .attr('display', 'none') // add this line!
+
+      infoBox.append('rect')
+        .attr('width', 100)
+        .attr('height', 100)
+
+      infoBox
+        .append('text')
+        .text('0.0')
+        .attr('fill', 'white')
+        .attr('dx', 50)
+        .attr('dy', 50)
+        .attr('text-anchor', 'middle')
+        .attr('alignment-baseline', 'middle')
+        .attr('font-size', 48)
+        .attr('font-family', 'Helvetica')
+
+
+    }
+
+    loadMap()
+  </script>
+</body>
+</html>
