@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    /* Put the box in the center of the page */
+    body, html {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    svg {
+      border: 1px solid;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <script>
+    // Define some variables for width and height
+    const width = 950
+    const height = 500
+    // Color scale
+    // const colorScale = d3.scaleLinear()
+    //   .range(['tomato', 'gold'])
+    //   .domain([0, 176])
+
+    const colorScale = d3.scaleSequential()
+      .interpolator(d3.interpolateRainbow)
+      .domain([0, 176])
+    // Define a projection
+    const projection = d3.geoMercator()
+      // .scale(1000) japan!
+      // .rotate([-140, -40]);
+
+    const svg = d3.select('body')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+
+    const path = d3.geoPath()
+      .projection(projection)
+
+    const g = svg.append('g')
+    async function loadMap() {
+      // load and display the World
+      const topology = await d3.json('data/world-110m2.json')
+      g.selectAll('path')
+        // Use topojson here to extract the topology from the map data
+        .data(topojson.feature(topology, topology.objects.countries).features)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('fill', (d, i) => colorScale(i))
+        .attr('stroke', 'black')
+        .attr('stroke-width', 0.25)
+    }
+
+    loadMap()
+  </script>
+</body>
+</html>
