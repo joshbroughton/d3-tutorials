@@ -24,8 +24,8 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <script src="https://unpkg.com/topojson@3"></script>
   <script>
-    const width = 950
-    const height = 500
+    const width = 1200
+    const height = 800
 
     // Create an SVG element
     const svg = d3.select('body')
@@ -38,7 +38,7 @@
 
     // Define a projection
     const projection = d3.geoMercator()
-      // .center([0, 5])
+      .center([-50, 50])
       .scale(150)
       .rotate([0, 0])
 
@@ -87,9 +87,9 @@
             .attr('stroke', '#f00')
           d3.select('.info-box')
             .attr('display', 'yes')
-            .attr('transform', `translate(${d3.select(this).attr('cx')}, ${d3.select(this).attr('cy')})`)
+            .attr('transform', `translate(${d3.select(this).attr('cx') - 100}, ${d3.select(this).attr('cy') - 100})`)
           d3.select('.info-box text')
-            .text(d.Magnitude)
+            .text(`${d.Magnitude} ${d.Date}`)
         })
         .on('mouseout', function (e, d) {
           d3.select(this)
@@ -104,21 +104,19 @@
         .attr('display', 'none') // add this line!
 
       infoBox.append('rect')
-        .attr('width', 100)
-        .attr('height', 100)
+        .attr('width', 200)
+        .attr('height', 50)
 
       infoBox
         .append('text')
         .text('0.0')
         .attr('fill', 'white')
-        .attr('dx', 50)
-        .attr('dy', 50)
+        .attr('dx', 100)
+        .attr('dy', 25)
         .attr('text-anchor', 'middle')
         .attr('alignment-baseline', 'middle')
-        .attr('font-size', 48)
+        .attr('font-size', 24)
         .attr('font-family', 'Helvetica')
-
-
     }
 
     loadMap()
